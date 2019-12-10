@@ -1,0 +1,9 @@
+-r base.txt
+# Code style
+autoflake
+black
+ipython
+isort
+# Typing
+mypy
+pre-commit

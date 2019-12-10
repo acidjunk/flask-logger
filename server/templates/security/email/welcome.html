@@ -1,0 +1,18 @@
+<p>{{ _('Welcome %(first_name)s!', first_name=user.first_name) }},</p>
+
+<p>
+    {{ _('You successfully created an account.') }}
+    {{ _('With your new account you will be able to view items.') }}
+</p>
+
+<h3>{{ _('Account Details') }}</h3>
+{{ _('E-mail:') }} <i>{{ user.email }}</i><br>
+{{ _('Created at:') }} <i>{{ user.created_at }}</i><br>
+
+<h3>{{ _('E-mail confirmation') }}</h3>
+<p>{{ _('To avoid login and AVG issues you need to confirm your email through the link below within a couple of days:') }}</p>
+<p><a href="{{ confirmation_link }}">{{ _('Confirm my account') }}</a></p>
+
+<p>{{ _('Have fun using the logger') }}</p>
+
+<p>{{ _('the Logger') }}</p>

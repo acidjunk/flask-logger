@@ -17,8 +17,6 @@
                 {% if register_user_form.password_confirm %}
                 {{ render_field_with_errors(register_user_form.password_confirm) }}
                 {% endif %}
-                {{ render_field_with_errors(register_user_form.mail_offers) }}
-                {{ render_field_with_errors(register_user_form.mail_announcements) }}
                 {{ render_field(register_user_form.submit, class="btn btn-primary") }}
             </form>
             <p>Already signed up? Please <a href="{{ url_for('security.login') }}">log in</a>.</p>

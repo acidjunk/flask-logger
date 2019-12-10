@@ -3,7 +3,17 @@ import uuid
 
 from flask_security import RoleMixin, SQLAlchemySessionUserDatastore, UserMixin
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import JSON, Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import backref, relationship
 
@@ -44,7 +54,9 @@ class User(db.Model, UserMixin):
     fs_uniquifier = Column(String(255))
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     confirmed_at = Column(DateTime())
-    roles = relationship("Role", secondary="roles_users", backref=backref("users", lazy="dynamic"))
+    roles = relationship(
+        "Role", secondary="roles_users", backref=backref("users", lazy="dynamic")
+    )
 
     mail_offers = Column(Boolean, default=False)
 
@@ -63,7 +75,7 @@ class Log(db.Model):
     log = Column(Text())
 
     def __repr__(self):
-        return self.name
+        return self.log
 
 
 user_datastore = SQLAlchemySessionUserDatastore(db.session, User, Role)

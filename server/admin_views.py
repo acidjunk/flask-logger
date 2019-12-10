@@ -1,20 +1,20 @@
 from flask_admin.contrib.sqla import ModelView
 from flask_login import current_user
 from flask_security import utils
-from markupsafe import Markup
-from wtforms import PasswordField, TextAreaField
+from wtforms import PasswordField
 
 
 class AuthModelMixin(ModelView):
-    def is_accessible(self):
-        # Prevent administration of Model unless the currently logged-in user has the "admin" role
-        if not current_user:
-            return False
-        try:
-            if "admin" in current_user.roles:
-                return True
-        except AttributeError:
-            return False
+    pass
+    # def is_accessible(self):
+    #     # Prevent administration of Model unless the currently logged-in user has the "admin" role
+    #     if not current_user:
+    #         return False
+    #     try:
+    #         if "admin" in current_user.roles:
+    #             return True
+    #     except AttributeError:
+    #         return False
 
 
 class UserAdminView(AuthModelMixin):
@@ -58,8 +58,3 @@ class RolesAdminView(AuthModelMixin):
 
 class BaseAdminView(AuthModelMixin):
     can_set_page_size = True
-
-
-class PriceAdminView(BaseAdminView):
-    can_set_page_size = True
-    column_default_sort = ("internal_product_id", False)

@@ -4,10 +4,10 @@ import uuid
 from contextlib import closing
 
 import pytest
+from server import main
+from server.database import Log, Role, User, db, user_datastore
 from sqlalchemy import create_engine
 from sqlalchemy.engine.url import make_url
-
-from server.database import Log, Role, User, db, user_datastore
 
 ADMIN_EMAIL = "admin@example.com"
 ADMIN_PASSWORD = "Adminn3tje"
@@ -85,7 +85,9 @@ def user_roles():
 
 @pytest.fixture
 def admin(user_roles):
-    user = user_datastore.create_user(username="admin", password=ADMIN_PASSWORD, email=ADMIN_EMAIL)
+    user = user_datastore.create_user(
+        username="admin", password=ADMIN_PASSWORD, email=ADMIN_EMAIL
+    )
     user_datastore.add_role_to_user(user, "admin")
     user.confirmed_at = datetime.datetime.utcnow()
     db.session.commit()

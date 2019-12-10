@@ -5,6 +5,7 @@ from tests.unit_tests.helpers import login, logout
 def test_admin_login(client, admin):
     """Make sure login and logout works."""
     response = login(client, ADMIN_EMAIL, ADMIN_PASSWORD)
+    print(response)
     assert response.json["response"]["user"]["authentication_token"]
     assert response.status_code == 200
     logout(client)

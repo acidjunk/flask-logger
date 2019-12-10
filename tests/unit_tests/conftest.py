@@ -4,8 +4,7 @@ import uuid
 from contextlib import closing
 
 import pytest
-from server import main
-from server.database import Log, Role, User, db, user_datastore
+from database import Log, Role, User, db, user_datastore
 from sqlalchemy import create_engine
 from sqlalchemy.engine.url import make_url
 

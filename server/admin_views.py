@@ -5,16 +5,15 @@ from wtforms import PasswordField
 
 
 class AuthModelMixin(ModelView):
-    pass
-    # def is_accessible(self):
-    #     # Prevent administration of Model unless the currently logged-in user has the "admin" role
-    #     if not current_user:
-    #         return False
-    #     try:
-    #         if "admin" in current_user.roles:
-    #             return True
-    #     except AttributeError:
-    #         return False
+    def is_accessible(self):
+        # Prevent administration of Model unless the currently logged-in user has the "admin" role
+        if not current_user:
+            return False
+        try:
+            if "Admin" in current_user.roles:
+                return True
+        except AttributeError:
+            return False
 
 
 class UserAdminView(AuthModelMixin):
@@ -58,3 +57,24 @@ class RolesAdminView(AuthModelMixin):
 
 class BaseAdminView(AuthModelMixin):
     can_set_page_size = True
+
+
+class LogAdminView(AuthModelMixin):
+    column_display_pk = True
+    column_list = [
+        "id",
+        "headers",
+        "body",
+        "created_at",
+    ]
+    # Don't display the password on the list of Users
+
+    # Automatically display human-readable names for the current and available Roles when creating or editing a User
+    column_default_sort = ("created_at", True)
+    column_auto_select_related = True
+    can_set_page_size = True
+    can_view_details = True
+    can_edit = False
+    can_delete = True
+    can_create = False
+

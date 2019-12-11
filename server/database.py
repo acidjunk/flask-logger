@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 import uuid
 
 from flask_security import RoleMixin, SQLAlchemySessionUserDatastore, UserMixin
@@ -52,7 +52,7 @@ class User(db.Model, UserMixin):
     password = Column(String(255))
     active = Column(Boolean())
     fs_uniquifier = Column(String(255))
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow)
     confirmed_at = Column(DateTime())
     roles = relationship(
         "Role", secondary="roles_users", backref=backref("users", lazy="dynamic")
@@ -72,7 +72,10 @@ class User(db.Model, UserMixin):
 class Log(db.Model):
     __tablename__ = "logs"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
-    log = Column(Text())
+    body = Column(Text())
+    headers = Column(JSON())
+    created_at = Column(DateTime, default=datetime.utcnow)
+
 
     def __repr__(self):
         return self.log

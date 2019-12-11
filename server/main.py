@@ -1,9 +1,10 @@
+import json
 import os
 
 import structlog
-from admin_views import BaseAdminView, RolesAdminView, UserAdminView
+from admin_views import BaseAdminView, RolesAdminView, UserAdminView, LogAdminView
 from database import Log, Role, User, db, user_datastore
-from flask import Flask, request, url_for
+from flask import Flask, request, url_for, render_template
 from flask_admin import Admin
 from flask_admin import helpers as admin_helpers
 from flask_cors import CORS
@@ -115,7 +116,7 @@ def load_user(user_id):
 # Views
 db.init_app(app)
 mail.init_app(app)
-admin.add_view(BaseAdminView(Log, db.session))
+admin.add_view(LogAdminView(Log, db.session))
 admin.add_view(UserAdminView(User, db.session))
 admin.add_view(RolesAdminView(Role, db.session))
 
@@ -123,10 +124,17 @@ migrate = Migrate(app, db)
 logger.info("Ready loading admin views and api")
 
 
-@app.route("/log")
+@app.route("/")
 def log_request_info():
-    logger.debug("Headers: %s", request.headers)
-    logger.debug("Body: %s", request.get_data())
+    body = request.get_data()
+    headers = request.headers
+    formatted_headers = str(headers).replace(": ", ": \n").replace("; ", "; \n")
+    headers_dict = {}
+    for header in headers.to_list():
+        headers_dict[header[0]]=header[1]
+    log = Log(body=body, headers=json.dumps(headers_dict))
+    db.session.add(log)
+    return render_template('index.html', body=body, headers=formatted_headers)
 
 
 if __name__ == "__main__":

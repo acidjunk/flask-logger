@@ -1,4 +1,4 @@
-import uuid
+import json
 
 import structlog
 from apis.helpers import (
@@ -7,19 +7,31 @@ from apis.helpers import (
     get_sort_from_args,
     load,
     query_with_filters,
-    save,
-    update,
 )
-from database import Tag
+from database import Log
 from flask_restplus import Namespace, Resource, fields, marshal_with
-from flask_security import roles_accepted
 
 logger = structlog.get_logger(__name__)
 
-api = Namespace("tags", description="Tag related operations")
+api = Namespace("logs", description="Log operations")
 
-tag_serializer = api.model(
-    "Tag", {"id": fields.String(), "name": fields.String(required=True, description="Unique tag name")}
+header_wildcard = fields.Wildcard(fields.String)
+
+log_serializer = api.model(
+    "Log",
+    {
+        "id": fields.String(),
+        "ip": fields.String(),
+        "full_headers": header_wildcard,
+        "remote_port": fields.Integer(required=True, description="Remote protocol"),
+        "server_protocol": fields.String(required=True, description="Server protocol"),
+        "http_connection": fields.String(required=True, description="HTTP Connection"),
+        "http_cache_control": fields.String(
+            required=True, description="Cache control header"
+        ),
+        "body": fields.String(required=True, description="Body of request"),
+        "created_at": fields.DateTime(required=True, description="Date for log entry"),
+    },
 )
 
 parser = api.parser()
@@ -29,46 +41,30 @@ parser.add_argument("filter", location="args", help="Filter default=[]")
 
 
 @api.route("/")
-@api.doc("Show all tags.")
-class TagResourceList(Resource):
-    @roles_accepted("admin")
-    @marshal_with(tag_serializer)
+@api.doc("Show all logs.")
+class LogResourceList(Resource):
+    @marshal_with(log_serializer)
     @api.doc(parser=parser)
     def get(self):
-        """List Tags"""
+        """List Logs"""
         args = parser.parse_args()
         range = get_range_from_args(args)
-        sort = get_sort_from_args(args)
+        sort = get_sort_from_args(args, "created_at", "DESC")
         filter = get_filter_from_args(args)
 
-        query_result, content_range = query_with_filters(Tag, Tag.query, range, sort, filter)
+        query_result, content_range = query_with_filters(
+            Log, Log.query, range, sort, filter, quick_search_columns=["ip"]
+        )
+        for item in query_result:
+            item.full_headers = json.loads(item.headers)
         return query_result, 200, {"Content-Range": content_range}
-
-    @roles_accepted("admin")
-    @api.expect(tag_serializer)
-    @api.marshal_with(tag_serializer)
-    def post(self):
-        """New Shops"""
-        tag = Tag(id=str(uuid.uuid4()), **api.payload)
-        save(tag)
-        return tag, 201
 
 
 @api.route("/<id>")
-@api.doc("Tag detail operations.")
-class TagResource(Resource):
-    @roles_accepted("admin")
-    @marshal_with(tag_serializer)
+@api.doc("Log detail operations.")
+class LogResource(Resource):
+    @marshal_with(log_serializer)
     def get(self, id):
-        """List Tag"""
-        item = load(Tag, id)
+        """List Log"""
+        item = load(Log, id)
         return item, 200
-
-    @roles_accepted("admin")
-    @api.expect(tag_serializer)
-    @api.marshal_with(tag_serializer)
-    def put(self, id):
-        """Edit Tag"""
-        item = load(Tag, id)
-        item = update(item, api.payload)
-        return item, 201

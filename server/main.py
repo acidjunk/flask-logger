@@ -2,9 +2,10 @@ import json
 import os
 
 import structlog
-from admin_views import BaseAdminView, RolesAdminView, UserAdminView, LogAdminView
+from admin_views import LogAdminView, RolesAdminView, UserAdminView
+from apis import api
 from database import Log, Role, User, db, user_datastore
-from flask import Flask, request, url_for, render_template
+from flask import Flask, jsonify, render_template, request, url_for
 from flask_admin import Admin
 from flask_admin import helpers as admin_helpers
 from flask_cors import CORS
@@ -114,6 +115,7 @@ def load_user(user_id):
 
 
 # Views
+api.init_app(app)
 db.init_app(app)
 mail.init_app(app)
 admin.add_view(LogAdminView(Log, db.session))
@@ -124,7 +126,8 @@ migrate = Migrate(app, db)
 logger.info("Ready loading admin views and api")
 
 
-@app.route("/")
+@app.route("/log")
+@app.route("/log.json")
 def log_request_info():
     body = request.get_data()
     headers = request.headers
@@ -136,10 +139,12 @@ def log_request_info():
 
     formatted_headers = ""
     for header_name, header_value in headers_dict.items():
+        value = header_value.replace(",", ", ")
         if header_name.upper() == "COOKIE":
-            formatted_headers = "{}\n{}\n{}\n".format(formatted_headers, header_name.upper(), header_value.replace("_", "_\n"))
-        else:
-            formatted_headers = "{}\n{}\n{}\n".format(formatted_headers, header_name.upper(), header_value)
+            value = value.replace("_", "_\n")
+        formatted_headers = "{}\n{}\n{}\n".format(
+            formatted_headers, header_name.upper(), value
+        )
 
     db_dict = {
         "headers": json.dumps(headers_dict),
@@ -149,11 +154,18 @@ def log_request_info():
         "http_cookie": request.environ.get("HTTP_COOKIE", ""),
         "http_user_agent": request.environ.get("HTTP_USER_AGENT", ""),
         "server_protocol": request.environ.get("SERVER_PROTOCOL", ""),
-        "remote_port": request.environ.get("REMOTE_PORT", ""),
+        "remote_port": request.environ.get("REMOTE_PORT", 0),
     }
 
     log = Log(**db_dict)
     db.session.add(log)
+
+    # Handle JSON response
+    if request.environ["PATH_INFO"] == "/log.json":
+        db_dict["headers"] = headers_dict
+        return jsonify(db_dict), 200
+
+    # Handle HTML response
     return render_template(
         "index.html",
         body=body,

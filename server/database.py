@@ -1,5 +1,5 @@
-from datetime import datetime
 import uuid
+from datetime import datetime
 
 from flask_security import RoleMixin, SQLAlchemySessionUserDatastore, UserMixin
 from flask_sqlalchemy import SQLAlchemy
@@ -8,14 +8,12 @@ from sqlalchemy import (
     Boolean,
     Column,
     DateTime,
-    Float,
     ForeignKey,
     Integer,
     String,
     Text,
-
 )
-from sqlalchemy.dialects.postgresql import UUID, INET
+from sqlalchemy.dialects.postgresql import INET, UUID
 from sqlalchemy.orm import backref, relationship
 
 db = SQLAlchemy()
@@ -83,7 +81,6 @@ class Log(db.Model):
     body = Column(Text())
     headers = Column(JSON())
     created_at = Column(DateTime, default=datetime.utcnow)
-
 
     def __repr__(self):
         return self.log

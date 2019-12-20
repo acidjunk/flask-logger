@@ -61,20 +61,12 @@ class BaseAdminView(AuthModelMixin):
 
 class LogAdminView(AuthModelMixin):
     column_display_pk = True
-    column_list = [
-        "id",
-        "headers",
-        "body",
-        "created_at",
-    ]
-    # Don't display the password on the list of Users
+    column_list = ["id", "ip", "http_user_agent", "headers", "body", "created_at"]
+    column_searchable_list = ("id", "ip", "http_user_agent", "headers")
 
-    # Automatically display human-readable names for the current and available Roles when creating or editing a User
     column_default_sort = ("created_at", True)
-    column_auto_select_related = True
     can_set_page_size = True
     can_view_details = True
     can_edit = False
     can_delete = True
     can_create = False
-

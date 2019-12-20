@@ -1,20 +1,12 @@
-import base64
-import os
 from ast import literal_eval
 from typing import Dict, List, Optional
 
-import boto3
 import structlog
 from database import db
 from flask_restplus import abort
 from sqlalchemy import String, cast, or_
 from sqlalchemy.sql import expression
 
-s3 = boto3.resource(
-    "s3",
-    aws_access_key_id=os.getenv("IMAGE_S3_ACCESS_KEY_ID"),
-    aws_secret_access_key=os.getenv("IMAGE_S3_SECRET_ACCESS_KEY"),
-)
 logger = structlog.get_logger(__name__)
 
 
@@ -28,13 +20,16 @@ def get_range_from_args(args):
             logger.info("Query parameters set to custom range", range=range)
             return range
         except:  # noqa: E722
-            logger.warning("Query parameters not parsable", args=args.get(["range"], "No range provided"))
+            logger.warning(
+                "Query parameters not parsable",
+                args=args.get(["range"], "No range provided"),
+            )
     range = [0, 19]  # Default range
     logger.info("Query parameters set to default range", range=range)
     return range
 
 
-def get_sort_from_args(args, default_sort="name"):
+def get_sort_from_args(args, default_sort="name", default_sort_order="ASC"):
     sort = []
     if args["sort"]:
         try:
@@ -44,8 +39,11 @@ def get_sort_from_args(args, default_sort="name"):
             logger.info("Query parameters set to custom sort", sort=sort)
             return sort
         except:  # noqa: E722
-            logger.warning("Query parameters not parsable", args=args.get(["sort"], "No sort provided"))
-    sort = [default_sort, "ASC"]  # Default sort
+            logger.warning(
+                "Query parameters not parsable",
+                args=args.get(["sort"], "No sort provided"),
+            )
+    sort = [default_sort, default_sort_order]  # Default sort
     logger.info("Query parameters set to default sort", sort=sort)
     return sort
 
@@ -55,11 +53,16 @@ def get_filter_from_args(args, default_filter={}):
         print(args["filter"])
         try:
 
-            filter = literal_eval(args["filter"].replace(":true", ":True").replace(":false", ":False"))
+            filter = literal_eval(
+                args["filter"].replace(":true", ":True").replace(":false", ":False")
+            )
             logger.info("Query parameters set to custom filter", filter=filter)
             return filter
         except:  # noqa: E722
-            logger.warning("Query parameters not parsable", args=args.get(["filter"], "No filter provided"))
+            logger.warning(
+                "Query parameters not parsable",
+                args=args.get(["filter"], "No filter provided"),
+            )
     logger.info("Query parameters set to default filter", filter=default_filter)
     return default_filter
 
@@ -104,10 +107,16 @@ def query_with_filters(
         for column, searchPhrase in filters.items():
             if isinstance(searchPhrase, list):
                 # OR query
-                logger.error("Returning first only: todo fix", first_item=searchPhrase[0])
+                logger.error(
+                    "Returning first only: todo fix", first_item=searchPhrase[0]
+                )
                 searchPhrase = searchPhrase[0]
             logger.info("TYPE", searchPhrase=type(searchPhrase))
-            logger.info("Query parameters set to custom filter for column", column=column, searchPhrase=searchPhrase)
+            logger.info(
+                "Query parameters set to custom filter for column",
+                column=column,
+                searchPhrase=searchPhrase,
+            )
 
             if searchPhrase is not None:
                 if type(searchPhrase) == bool:
@@ -126,14 +135,24 @@ def query_with_filters(
                     query = query.filter_by(id=searchPhrase)
                 elif column == "q":
                     logger.debug(
-                        "Activating multi kolom filter", column=column, quick_search_columns=quick_search_columns
+                        "Activating multi kolom filter",
+                        column=column,
+                        quick_search_columns=quick_search_columns,
                     )
                     conditions = []
                     for item in quick_search_columns:
-                        conditions.append(cast(model.__dict__[item], String).ilike("%" + searchPhrase + "%"))
+                        conditions.append(
+                            cast(model.__dict__[item], String).ilike(
+                                "%" + searchPhrase + "%"
+                            )
+                        )
                     query = query.filter(or_(*conditions))
                 else:
-                    query = query.filter(cast(model.__dict__[column], String).ilike("%" + searchPhrase + "%"))
+                    query = query.filter(
+                        cast(model.__dict__[column], String).ilike(
+                            "%" + searchPhrase + "%"
+                        )
+                    )
 
     if sort and len(sort) == 2:
         if sort[1].upper() == "DESC":
@@ -156,36 +175,3 @@ def query_with_filters(
     content_range = f"items {range_start}-{range_end}/{total}"
 
     return query.all(), content_range
-
-
-def upload_file(blob, file_name):
-    image_mime, image_base64 = blob.split(",")
-    image = base64.b64decode(image_base64)
-
-    # Todo: make dynamic
-    s3_object = s3.Object("images-prijslijst-info", file_name)
-    resp = s3_object.put(Body=image, ContentType="image/png")
-
-    if resp["ResponseMetadata"]["HTTPStatusCode"] == 200:
-        logger.info("Uploaded file to S3", file_name=file_name)
-
-        # Make the result public
-        object_acl = s3_object.Acl()
-        response = object_acl.put(ACL="public-read")
-        logger.info("Made public", response=response)
-
-
-def name_file(column_name, kind_name, image_name=""):
-    _, _, image_number = column_name.rpartition("_")[0:3]
-    current_name = image_name
-    extension = "png"  # todo: make it dynamic e.g. get it from mime-type, extra arg for this function?
-    if not current_name:
-        name = "".join([c if c.isalnum() else "-" for c in kind_name])
-        name = f"{name}-{image_number}-1".lower()
-    else:
-        name, _ = current_name.split(".")
-        name, _, counter = name.rpartition("-")[0:3]
-        name = f"{name}-{int(counter) + 1}".lower()
-    name = f"{name}.{extension}"
-    logger.info("Named file", col_name=column_name, name_in=image_name, name_out=name)
-    return name

@@ -62,7 +62,7 @@ class User(db.Model, UserMixin):
 
     # Human-readable values for the User when editing user related stuff.
     def __str__(self):
-        return f"{self.username} : {self.email}"
+        return {self.email}
 
     # __hash__ is required to avoid the exception TypeError: unhashable type: 'Role' when saving a User
     def __hash__(self):

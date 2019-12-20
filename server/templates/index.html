@@ -33,7 +33,7 @@
     <h1 class="ui header">Browser/request info</h1>
     <div class="ui segment">
 
-        <div class="ui grid">
+        <div class="ui stackable grid">
             <div class="twelve wide column">
                 <h3 class="ui dividing header">Headers</h3>
                 <pre>
@@ -42,7 +42,20 @@
             </div>
 
             <div class="four wide column">
-                <h3 class="ui dividing header">Body</h3>
+                <h3 class="ui dividing header">Other stuff</h3>
+                <h4 class="ui header">IP</h4>
+                {{ ip }}
+                <h4 class="ui header">User Agent</h4>
+                {{ http_user_agent }}
+                <h4 class="ui header">Server protocol</h4>
+                {{ server_protocol }}
+                <h4 class="ui header">HTTP Connection</h4>
+                {{ http_connection }}
+                <h4 class="ui header">Remote Port</h4>
+                {{ remote_port }}
+                <h4 class="ui header">Cache control</h4>
+                {{ http_cache_control }}
+                <h4 class="ui header">Body</h4>
                 {{ body }}
 
             </div>

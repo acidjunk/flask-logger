@@ -128,13 +128,43 @@ logger.info("Ready loading admin views and api")
 def log_request_info():
     body = request.get_data()
     headers = request.headers
-    formatted_headers = str(headers).replace(": ", ": \n").replace("; ", "; \n")
+
+    # formatted_headers = str(headers).replace(": ", ": \n").replace("; ", "; \n")
     headers_dict = {}
     for header in headers.to_list():
-        headers_dict[header[0]]=header[1]
-    log = Log(body=body, headers=json.dumps(headers_dict))
+        headers_dict[header[0]] = header[1]
+
+    formatted_headers = ""
+    for header_name, header_value in headers_dict.items():
+        if header_name.upper() == "COOKIE":
+            formatted_headers = "{}\n{}\n{}\n".format(formatted_headers, header_name.upper(), header_value.replace("_", "_\n"))
+        else:
+            formatted_headers = "{}\n{}\n{}\n".format(formatted_headers, header_name.upper(), header_value)
+
+    db_dict = {
+        "headers": json.dumps(headers_dict),
+        "ip": request.remote_addr,
+        "http_connection": request.environ.get("HTTP_CONNECTION", ""),
+        "http_cache_control": request.environ.get("HTTP_CACHE_CONTROL", ""),
+        "http_cookie": request.environ.get("HTTP_COOKIE", ""),
+        "http_user_agent": request.environ.get("HTTP_USER_AGENT", ""),
+        "server_protocol": request.environ.get("SERVER_PROTOCOL", ""),
+        "remote_port": request.environ.get("REMOTE_PORT", ""),
+    }
+
+    log = Log(**db_dict)
     db.session.add(log)
-    return render_template('index.html', body=body, headers=formatted_headers)
+    return render_template(
+        "index.html",
+        body=body,
+        headers=formatted_headers,
+        ip=request.remote_addr,
+        http_connection=db_dict["http_connection"],
+        http_user_agent=db_dict["http_user_agent"],
+        server_protocol=db_dict["server_protocol"],
+        remote_port=db_dict["remote_port"],
+        http_cache_control=db_dict["http_cache_control"],
+    )
 
 
 if __name__ == "__main__":

@@ -13,8 +13,9 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+
 )
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, INET
 from sqlalchemy.orm import backref, relationship
 
 db = SQLAlchemy()
@@ -72,6 +73,13 @@ class User(db.Model, UserMixin):
 class Log(db.Model):
     __tablename__ = "logs"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    ip = Column(INET)
+    remote_port = Column(Integer)
+    server_protocol = Column(String)
+    http_connection = Column(String)
+    http_cache_control = Column(String)
+    http_user_agent = Column(String)
+    http_cookie = Column(String)
     body = Column(Text())
     headers = Column(JSON())
     created_at = Column(DateTime, default=datetime.utcnow)
